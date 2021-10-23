@@ -16,33 +16,33 @@ Forth >> assertStackBigEnough: stack [
 { #category : #'as yet unclassified' }
 Forth >> evaluate: tokens withStack: stack [
 |ops|
- ops := Dictionary newFrom: {'+' -> [ self assertStackBigEnough: stack. 
-                         ^ self evaluate: (tokens allButFirst) withStack: ((stack allButLast: 2)
-	                                                                  addLast: (stack atLast: 1 ) + (stack atLast: 2); yourself)].
-									 '-' -> [  self assertStackBigEnough: stack. 
-	                                         ^  self evaluate: (tokens allButFirst) withStack: ((stack allButLast: 2)
-	                                                                  addLast: (stack atLast: 2 ) - (stack atLast: 1); yourself)
+ ops := Dictionary newFrom: {'+' -> [:s :t| self assertStackBigEnough: s. 
+                         ^ self evaluate: (t allButFirst) withStack: ((s allButLast: 2)
+	                                                                  addLast: (s atLast: 1 ) + (s atLast: 2); yourself)].
+									 '-' -> [:s :t|   self assertStackBigEnough: s. 
+	                                         ^  self evaluate: (t allButFirst) withStack: ((s allButLast: 2)
+	                                                                  addLast: (s atLast: 2 ) - (s atLast: 1); yourself)
 																						 ] .
-									 '*' -> [ self assertStackBigEnough: stack. 
-	                                         ^  self evaluate: (tokens allButFirst) withStack: ((stack allButLast: 2)
-	                                                                  addLast: (stack atLast: 1 ) * (stack atLast: 2); yourself)
+									 '*' -> [:s :t|  self assertStackBigEnough: s. 
+	                                         ^  self evaluate: (t allButFirst) withStack: ((s allButLast: 2)
+	                                                                  addLast: (s atLast: 1 ) * (s atLast: 2); yourself)
 																						 ].
-									 '/' -> [  self assertStackBigEnough: stack. 
-										         (stack atLast: 1) = 0 ifTrue: [ Object error: 'divide by zero' ].
-	                                         ^  self evaluate: (tokens allButFirst) withStack: ((stack allButLast: 2)
-	                                                                  addLast: ((stack atLast: 2) / (stack atLast: 1)) asInteger; yourself)
+									 '/' -> [:s :t|   self assertStackBigEnough: s. 
+										         (s atLast: 1) = 0 ifTrue: [ Object error: 'divide by zero' ].
+	                                         ^  self evaluate: (t allButFirst) withStack: ((s allButLast: 2)
+	                                                                  addLast: ((s atLast: 2) / (s atLast: 1)) asInteger; yourself)
 																						 ].
-									'dup' -> [ ^ self evaluate: (tokens allButFirst) withStack: (stack addLast: stack last; yourself) ].
-									'drop' -> [ ^ self evaluate: (tokens allButFirst) withStack: stack allButLast ].
-									'over' -> [^ self evaluate: (tokens allButFirst) withStack: (stack addLast: (stack atLast: 2);yourself ) ].
-									'swap' -> [   self assertStackBigEnough: stack. ^ self evaluate: (tokens allButFirst) withStack:  (stack swap: (stack size) with: (stack size - 1) )].
+									'dup' -> [:s :t|  ^ self evaluate: (t allButFirst) withStack: (s addLast: s last; yourself) ].
+									'drop' -> [:s :t|  ^ self evaluate: (t allButFirst) withStack: s allButLast ].
+									'over' -> [:s :t| ^ self evaluate: (t allButFirst) withStack: (s addLast: (s atLast: 2);yourself ) ].
+									'swap' -> [ :s :t|   self assertStackBigEnough: s. ^ self evaluate: (t allButFirst) withStack:  (s swap: (s size) with: (s size - 1) )].
 									}.
  tokens isEmpty
 	ifTrue: [  ^ stack ]
 	ifFalse: [ |op absentBlock|  
-		absentBlock := [ ^ self evaluate: (tokens allButFirst) withStack: (stack addLast: (tokens first asNumber);yourself)].
+		absentBlock := [:s :t| ^ self evaluate: (t allButFirst) withStack: (s addLast: (t first asNumber);yourself)].
 		op := ops at: tokens first asLowercase ifAbsent: [ absentBlock ] .
-		 ^ op value ]
+		 ^ op value: stack value: tokens ]
  
 ]
 
