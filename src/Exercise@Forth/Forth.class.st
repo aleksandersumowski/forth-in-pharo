@@ -48,7 +48,12 @@ Forth >> evaluateInstructions: aCollection [
 									'over' -> [:s :t| self assert: s hasAtLeast: 2. self evaluate: ops on:  (t allButFirst) withStack: (s addLast: (s atLast: 2);yourself ) ].
 									'swap' -> [ :s :t|  self assert: s hasAtLeast: 2. self evaluate: ops on:  (t allButFirst) withStack:  (s swap: (s size) with: (s size - 1) )].
 									}.
-	tokens := (aCollection last splitOn: ' ').
+	aCollection allButLast do: [ :custom|
+		|op|
+		op := custom splitOn: ' ' allButFirst allButLast.
+		ops at: op first put: [ :s :t| self evaluate: ops on: (op allButFirst), (t allButFirst)  withStack: s  ] 
+		 ].
+	tokens  := (aCollection last splitOn: ' ').
 	result := self evaluate: ops on: tokens withStack: OrderedCollection new.
 	^ (result collect: [:el| el asNumber]) asArray.
 ]
