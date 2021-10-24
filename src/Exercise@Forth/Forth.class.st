@@ -17,9 +17,10 @@ Forth >> assert: stack hasAtLeast: minElements [
 Forth >> evaluate: ops on: tokens withStack: stack [
  tokens isEmpty
 	ifTrue: [  ^ stack ]
-	ifFalse: [ |op absentBlock|  
-		absentBlock := [:s :t| ^ self evaluate: ops on: (t allButFirst) withStack: (s addLast: (t first asNumber);yourself)].
-		op := ops at: tokens first asLowercase ifAbsent: [ absentBlock ] .
+	ifFalse: [ |op  token|  
+		token := tokens first.
+		(token allSatisfy: [ :char| char isDigit ]) ifTrue: [ ^ self evaluate: ops on: (tokens allButFirst) withStack: (stack addLast: (tokens first asNumber);yourself) ].
+		op := ops at: token asLowercase ifAbsent: [Object error: 'undefined operation'].
 		 ^ op value: stack value: tokens ]
  
 ]
@@ -48,12 +49,14 @@ Forth >> evaluateInstructions: aCollection [
 									'over' -> [:s :t| self assert: s hasAtLeast: 2. self evaluate: ops on:  (t allButFirst) withStack: (s addLast: (s atLast: 2);yourself ) ].
 									'swap' -> [ :s :t|  self assert: s hasAtLeast: 2. self evaluate: ops on:  (t allButFirst) withStack:  (s swap: (s size) with: (s size - 1) )].
 									}.
-	aCollection allButLast do: [ :custom|
+	(aCollection select: [ :each| (each beginsWith: ':') and: (each endsWith: ';')  ]) do: [ :custom|
 		|op|
-		op := (custom splitOn: ' ') allButFirst allButLast.
+		op := (custom asLowercase splitOn: ' ') allButFirst allButLast.
+
+		(op first allSatisfy: [ :char| char isDigit ]) ifTrue: [ Object error: 'illegal operation' ].
 		ops at: op first put: [ :s :t| self evaluate: ops on: (op allButFirst), (t allButFirst)  withStack: s  ] 
 		 ].
-	tokens  := (aCollection last splitOn: ' ').
+	tokens  := ((aCollection reject: [ :each| (each beginsWith: ':') and: (each endsWith: ';')  ]) first splitOn: ' ').
 	result := self evaluate: ops on: tokens withStack: OrderedCollection new.
 	^ (result collect: [:el| el asNumber]) asArray.
 ]
