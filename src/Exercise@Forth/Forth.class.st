@@ -50,7 +50,7 @@ Forth >> evaluateInstructions: aCollection [
 									}.
 	aCollection allButLast do: [ :custom|
 		|op|
-		op := custom splitOn: ' ' allButFirst allButLast.
+		op := (custom splitOn: ' ') allButFirst allButLast.
 		ops at: op first put: [ :s :t| self evaluate: ops on: (op allButFirst), (t allButFirst)  withStack: s  ] 
 		 ].
 	tokens  := (aCollection last splitOn: ' ').
