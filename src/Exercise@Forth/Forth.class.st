@@ -27,7 +27,7 @@ Forth >> evaluate: ops on: tokens withStack: stack [
 
 { #category : #'as yet unclassified' }
 Forth >> evaluateInstructions: aCollection [ 
-	|tokens result ops|
+	|tokens result ops customTokens|
  ops := Dictionary newFrom: {'+' -> [:s :t| self assert: s hasAtLeast: 2. 
                           self evaluate: ops on: (t allButFirst) withStack: ((s allButLast: 2)
 	                                                                  addLast: (s atLast: 1 ) + (s atLast: 2); yourself)].
@@ -49,12 +49,17 @@ Forth >> evaluateInstructions: aCollection [
 									'over' -> [:s :t| self assert: s hasAtLeast: 2. self evaluate: ops on:  (t allButFirst) withStack: (s addLast: (s atLast: 2);yourself ) ].
 									'swap' -> [ :s :t|  self assert: s hasAtLeast: 2. self evaluate: ops on:  (t allButFirst) withStack:  (s swap: (s size) with: (s size - 1) )].
 									}.
+	customTokens := Dictionary new.
 	(aCollection select: [ :each| (each beginsWith: ':') and: (each endsWith: ';')  ]) do: [ :custom|
-		|op|
+		|op tokenValue|
 		op := (custom asLowercase splitOn: ' ') allButFirst allButLast.
-
 		(op first allSatisfy: [ :char| char isDigit ]) ifTrue: [ Object error: 'illegal operation' ].
-		ops at: op first put: [ :s :t| self evaluate: ops on: (op allButFirst), (t allButFirst)  withStack: s  ] 
+		tokenValue := op allButFirst collect: [ :token | customTokens at: token ifAbsent: token  ].
+		customTokens at: op first put: tokenValue flattened 
+		 ].
+	customTokens keysAndValuesDo: [ :k :v |
+		ops at: k put: [ :s :t|
+			self evaluate: ops on: v, (t allButFirst) withStack: s  ] 
 		 ].
 	tokens  := ((aCollection reject: [ :each| (each beginsWith: ':') and: (each endsWith: ';')  ]) first splitOn: ' ').
 	result := self evaluate: ops on: tokens withStack: OrderedCollection new.
