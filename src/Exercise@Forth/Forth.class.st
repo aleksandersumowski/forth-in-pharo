@@ -1,6 +1,9 @@
 Class {
 	#name : #Forth,
 	#superclass : #Object,
+	#instVars : [
+		'ops'
+	],
 	#classInstVars : [
 		'ops'
 	],
@@ -60,4 +63,29 @@ Forth >> evaluateInstructions: aCollection [
 	tokens  := (((aCollection reject: [ :each| (each beginsWith: ':') and: (each endsWith: ';')  ]) first splitOn: ' ') collect: [:token | customTokens at: token asLowercase ifAbsent: token]) flattened.
 	result := self evaluate: ops on: tokens withStack: OrderedCollection new.
 	^ (result collect: [:el| el asNumber]) asArray.
+]
+
+{ #category : #initialization }
+Forth >> initialize [ 
+ ops := Dictionary newFrom: {'+' -> [:s :t| self assert: s hasAtLeast: 2. 
+                          self evaluate: ops on: (t allButFirst) withStack: ((s allButLast: 2)
+	                                                                  addLast: (s atLast: 1 ) + (s atLast: 2); yourself)].
+									 '-' -> [:s :t|   self assert: s hasAtLeast: 2.
+	                                          self evaluate: ops on:  (t allButFirst) withStack: ((s allButLast: 2)
+	                                                                  addLast: (s atLast: 2 ) - (s atLast: 1); yourself)
+																						 ] .
+									 '*' -> [:s :t|  self assert: s hasAtLeast: 2.
+	                                         self evaluate: ops on:  (t allButFirst) withStack: ((s allButLast: 2)
+	                                                                  addLast: (s atLast: 1 ) * (s atLast: 2); yourself)
+																						 ].
+									 '/' -> [:s :t|   self assert: s hasAtLeast: 2.
+										         (s atLast: 1) = 0 ifTrue: [ Object error: 'divide by zero' ].
+	                                         self evaluate: ops on:  (t allButFirst) withStack: ((s allButLast: 2)
+	                                                                  addLast: ((s atLast: 2) / (s atLast: 1)) asInteger; yourself)
+																						 ].
+									'dup' -> [:s :t| self assert: s hasAtLeast: 1. self evaluate: ops on:  (t allButFirst) withStack: (s addLast: s last; yourself) ].
+									'drop' -> [:s :t| self assert: s hasAtLeast: 1. self evaluate: ops on:  (t allButFirst) withStack: s allButLast ].
+									'over' -> [:s :t| self assert: s hasAtLeast: 2. self evaluate: ops on:  (t allButFirst) withStack: (s addLast: (s atLast: 2);yourself ) ].
+									'swap' -> [ :s :t|  self assert: s hasAtLeast: 2. self evaluate: ops on:  (t allButFirst) withStack:  (s swap: (s size) with: (s size - 1) )].
+									}.
 ]
