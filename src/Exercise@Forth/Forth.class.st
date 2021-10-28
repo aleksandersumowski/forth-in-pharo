@@ -54,14 +54,10 @@ Forth >> evaluateInstructions: aCollection [
 		|op tokenValue|
 		op := (custom asLowercase splitOn: ' ') allButFirst allButLast.
 		(op first allSatisfy: [ :char| char isDigit ]) ifTrue: [ Object error: 'illegal operation' ].
-		tokenValue := op allButFirst collect: [ :token | customTokens at: token ifAbsent: token  ].
+		tokenValue := op allButFirst collect: [ :token | customTokens at: token ifAbsent: token asLowercase  ].
 		customTokens at: op first put: tokenValue flattened 
 		 ].
-	customTokens keysAndValuesDo: [ :k :v |
-		ops at: k put: [ :s :t|
-			self evaluate: ops on: v, (t allButFirst) withStack: s  ] 
-		 ].
-	tokens  := ((aCollection reject: [ :each| (each beginsWith: ':') and: (each endsWith: ';')  ]) first splitOn: ' ').
+	tokens  := (((aCollection reject: [ :each| (each beginsWith: ':') and: (each endsWith: ';')  ]) first splitOn: ' ') collect: [:token | customTokens at: token asLowercase ifAbsent: token]) flattened.
 	result := self evaluate: ops on: tokens withStack: OrderedCollection new.
 	^ (result collect: [:el| el asNumber]) asArray.
 ]
